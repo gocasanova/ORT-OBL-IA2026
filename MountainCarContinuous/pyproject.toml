@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "mountaincarcontinuous"
+version = "0.1.0"
+description = "Ambiente Ejercicio 1 Obligatorio IA"
+authors = ["AlejoGarat"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "~3.10"
+numpy = "^2.1.2"
+gymnasium = "^1.0.0"
+matplotlib = "^3.9.2"
+pygame = "^2.6.1"
+
+[tool.poetry.group.dev.dependencies]
+notebook = "^7.2.1"
+black = "^24.8.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
