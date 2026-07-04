@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pickle
 import time
-from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -28,83 +27,39 @@ class QLearningAgent:
         epsilon_min: float = 0.05,
         epsilon_decay: float = 0.995,
         seed: int | None = None,
-        reward_shaping: str = "none",
-        shaping_position_weight: float = 1.0,
-        shaping_velocity_weight: float = 0.5,
-        q_init: float = 0.0,
-        explicit_action_values: Sequence[float] | None = None,
     ) -> None:
-        actions = self._build_actions(action_bins, explicit_action_values)
         self._validate_hyperparameters(
             position_bins,
             velocity_bins,
-            len(actions),
+            action_bins,
             alpha,
             gamma,
             epsilon,
             epsilon_min,
             epsilon_decay,
-            reward_shaping,
-            shaping_position_weight,
-            shaping_velocity_weight,
-            q_init,
         )
 
         self.position_bins = int(position_bins)
         self.velocity_bins = int(velocity_bins)
-        self.action_bins = len(actions)
+        self.action_bins = int(action_bins)
         self.alpha = float(alpha)
         self.gamma = float(gamma)
         self.epsilon = float(epsilon)
         self.epsilon_min = float(epsilon_min)
         self.epsilon_decay = float(epsilon_decay)
         self.seed = seed
-        self.reward_shaping = reward_shaping
-        self.shaping_position_weight = float(shaping_position_weight)
-        self.shaping_velocity_weight = float(shaping_velocity_weight)
-        self.q_init = float(q_init)
-        self.explicit_action_values = (
-            None
-            if explicit_action_values is None
-            else [float(value) for value in explicit_action_values]
-        )
 
         self.observation_low = self.DEFAULT_OBSERVATION_LOW.copy()
         self.observation_high = self.DEFAULT_OBSERVATION_HIGH.copy()
         self._build_state_edges()
 
-        self.actions = actions
-        self.q_table = np.full(
+        self.actions = np.linspace(-1.0, 1.0, self.action_bins, dtype=np.float32)
+        self.q_table = np.zeros(
             (self.position_bins, self.velocity_bins, self.action_bins),
-            self.q_init,
             dtype=np.float64,
         )
         self.rng = np.random.default_rng(seed)
         self.metadata: dict[str, Any] = {}
-
-    @staticmethod
-    def _build_actions(
-        action_bins: int, explicit_action_values: Sequence[float] | None
-    ) -> np.ndarray:
-        if explicit_action_values is None:
-            if action_bins < 2:
-                raise ValueError("action_bins debe ser al menos 2.")
-            return np.linspace(-1.0, 1.0, int(action_bins), dtype=np.float32)
-
-        actions = np.asarray(explicit_action_values, dtype=np.float32)
-        if actions.ndim != 1 or actions.size < 2:
-            raise ValueError("explicit_action_values debe contener al menos 2 valores.")
-        if (
-            not np.all(np.isfinite(actions))
-            or np.any(actions < -1.0)
-            or np.any(actions > 1.0)
-        ):
-            raise ValueError(
-                "Las acciones explícitas deben ser finitas y estar en [-1, 1]."
-            )
-        if np.unique(actions).size != actions.size:
-            raise ValueError("explicit_action_values no puede contener duplicados.")
-        return actions.copy()
 
     @staticmethod
     def _validate_hyperparameters(
@@ -116,10 +71,6 @@ class QLearningAgent:
         epsilon: float,
         epsilon_min: float,
         epsilon_decay: float,
-        reward_shaping: str,
-        shaping_position_weight: float,
-        shaping_velocity_weight: float,
-        q_init: float,
     ) -> None:
         if position_bins < 2 or velocity_bins < 2 or action_bins < 2:
             raise ValueError("Cada discretización debe tener al menos 2 bins.")
@@ -131,11 +82,6 @@ class QLearningAgent:
             raise ValueError("Debe cumplirse 0 <= epsilon_min <= epsilon <= 1.")
         if not 0 < epsilon_decay <= 1:
             raise ValueError("epsilon_decay debe estar en el intervalo (0, 1].")
-        if reward_shaping not in {"none", "potential"}:
-            raise ValueError("reward_shaping debe ser 'none' o 'potential'.")
-        numeric_values = (shaping_position_weight, shaping_velocity_weight, q_init)
-        if not all(np.isfinite(value) for value in numeric_values):
-            raise ValueError("Los pesos de shaping y q_init deben ser finitos.")
 
     def _build_state_edges(self) -> None:
         self.position_edges = np.linspace(
@@ -183,34 +129,14 @@ class QLearningAgent:
         velocity_index = int(np.clip(velocity_index, 0, self.velocity_bins - 1))
         return position_index, velocity_index
 
-    def _potential(self, observation: np.ndarray) -> float:
-        position, velocity = np.asarray(observation, dtype=np.float32)
-        position_range = self.observation_high[0] - self.observation_low[0]
-        normalized_position = np.clip(
-            (position - self.observation_low[0]) / position_range, 0.0, 1.0
-        )
-        max_abs_velocity = max(
-            abs(float(self.observation_low[1])), abs(float(self.observation_high[1]))
-        )
-        normalized_abs_velocity = np.clip(abs(float(velocity)) / max_abs_velocity, 0, 1)
-        return float(
-            self.shaping_position_weight * normalized_position
-            + self.shaping_velocity_weight * normalized_abs_velocity
-        )
-
     def _learning_reward(
         self,
         env_reward: float,
         observation: np.ndarray,
         next_observation: np.ndarray,
     ) -> float:
-        if self.reward_shaping == "none":
-            return float(env_reward)
-        return float(
-            env_reward
-            + self.gamma * self._potential(next_observation)
-            - self._potential(observation)
-        )
+        """Mantiene una única señal de aprendizaje: el reward del ambiente."""
+        return float(env_reward)
 
     def _action_array(self, action_index: int) -> np.ndarray:
         return np.array([self.actions[action_index]], dtype=np.float32)
@@ -388,7 +314,7 @@ class QLearningAgent:
         destination = Path(path)
         destination.parent.mkdir(parents=True, exist_ok=True)
         data = {
-            "version": 2,
+            "version": 3,
             "q_table": self.q_table,
             "actions": self.actions,
             "observation_low": self.observation_low,
@@ -405,11 +331,6 @@ class QLearningAgent:
                 "epsilon_min": self.epsilon_min,
                 "epsilon_decay": self.epsilon_decay,
                 "seed": self.seed,
-                "reward_shaping": self.reward_shaping,
-                "shaping_position_weight": self.shaping_position_weight,
-                "shaping_velocity_weight": self.shaping_velocity_weight,
-                "q_init": self.q_init,
-                "explicit_action_values": self.explicit_action_values,
             },
         }
         with destination.open("wb") as model_file:
@@ -417,13 +338,29 @@ class QLearningAgent:
 
     @classmethod
     def load(cls, path: str | Path) -> "QLearningAgent":
-        """Reconstruye modelos actuales y modelos versión 1."""
+        """Reconstruye modelos actuales y conserva compatibilidad con versiones 1/2."""
         with Path(path).open("rb") as model_file:
             data = pickle.load(model_file)
 
-        if data.get("version") not in {1, 2}:
+        if data.get("version") not in {1, 2, 3}:
             raise ValueError("Versión de modelo no soportada.")
-        agent = cls(**data["hyperparameters"])
+        supported = {
+            "position_bins",
+            "velocity_bins",
+            "action_bins",
+            "alpha",
+            "gamma",
+            "epsilon",
+            "epsilon_min",
+            "epsilon_decay",
+            "seed",
+        }
+        hyperparameters = {
+            key: value
+            for key, value in data["hyperparameters"].items()
+            if key in supported
+        }
+        agent = cls(**hyperparameters)
         agent.observation_low = np.asarray(data["observation_low"], dtype=np.float32)
         agent.observation_high = np.asarray(data["observation_high"], dtype=np.float32)
         agent._build_state_edges()

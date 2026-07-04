@@ -1,5 +1,4 @@
 import numpy as np
-from tabulate import tabulate
 import random
 
 empty_cell = 0
@@ -123,6 +122,10 @@ class Board:
 
     def render_grid(self):
         """Imprime el tablero en consola"""
+        # Rendering is the only operation that needs the optional formatting
+        # dependency; game-tree search itself only needs NumPy.
+        from tabulate import tabulate
+
         num_rows, num_cols = self.board_size
         table = [["" for _ in range(num_cols + 1)] for _ in range(num_rows)]
 
@@ -147,7 +150,10 @@ class Board:
 
     def clone(self):
         """Devuelve una copia del tablero"""
-        board_clone = Board()
+        # Avoid calling __init__: it would place random players unnecessarily and,
+        # more importantly, used to reset rectangular boards to the 4x4 default.
+        board_clone = Board.__new__(Board)
+        board_clone.board_size = self.board_size
         board_clone.grid = np.copy(self.grid)
         return board_clone
     

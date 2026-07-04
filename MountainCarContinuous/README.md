@@ -1,8 +1,9 @@
-# MountainCarContinuous con Q-Learning
+# MountainCarContinuous con Q-Learning y Dyna-Q
 
-Esta carpeta contiene un agente Q-Learning tabular y una notebook para ejecutar
-y comparar experimentos de `MountainCarContinuous-v0`. El entrenamiento y el
-test usan `render_mode="rgb_array"` y no abren ventanas.
+Esta carpeta contiene agentes tabulares Q-Learning y Dyna-Q para ejecutar y
+comparar experimentos de `MountainCarContinuous-v0`. La notebook existente se
+conserva para Q-Learning; Dyna-Q se ejecuta con los scripts documentados abajo.
+El entrenamiento y el test no abren ventanas.
 
 ## Instalación y ejecución
 
@@ -13,37 +14,21 @@ poetry install
 poetry run jupyter notebook continuous_mountain_car.ipynb
 ```
 
-La notebook incluye configuraciones breves para experimentación interactiva. Las
-búsquedas largas se ejecutan desde la consola para conservar el progreso aunque
-se cierre Jupyter.
+La notebook tiene un flujo único y breve: imports, función, configuración
+editable, ejecución y gráficos. La celda titulada
+`▶ EJECUTÁ ESTA CELDA PARA ENTRENAR` es la única que inicia el entrenamiento.
+Las búsquedas múltiples continúan disponibles desde la consola.
 
-Para comparar resultados en la notebook:
+## Hiperparámetros admitidos
 
-1. Ejecutar las celdas; los ejemplos no entrenan mientras
-   `RUN_EXAMPLE_EXPERIMENTS=False`.
-2. Editar `COMPARISON_SEARCH_ID` para elegir una búsqueda. La vista inicial usa
-   la overnight completa `6b358d688579`.
-3. Revisar la tabla y las seis gráficas agregadas por configuración/seed.
-4. Escribir manualmente un nombre en `CHOSEN_CONFIG_NAME` para ver sus cinco
-   corridas y rutas de modelos.
+Los experimentos nuevos utilizan únicamente `alpha`, `gamma`, `epsilon`,
+`epsilon_min`, `epsilon_decay`, cantidad de episodios y bins de posición,
+velocidad y acciones. La Q-table comienza en cero, el reward de aprendizaje es
+el reward original del ambiente y las acciones siempre se distribuyen
+uniformemente entre `-1` y `1`.
 
-La notebook no asigna puntajes ni decide una configuración.
-
-## Estrategias contra la política no-op
-
-Las primeras búsquedas aprendieron a usar fuerza cero: así evitaban la
-penalización energética, pero nunca alcanzaban la meta. El agente permite ahora:
-
-- `reward_shaping="potential"`: durante entrenamiento agrega
-  `gamma * Phi(next_state) - Phi(state)` para aportar señal por posición y
-  velocidad. El test siempre usa y reporta la recompensa original del ambiente.
-- `q_init > 0`: inicialización optimista que incentiva probar acciones no
-  visitadas.
-- `explicit_action_values`: lista opcional que sustituye las acciones uniformes;
-  puede omitirse `0.0` para comparar políticas sin no-op.
-- decay lento de epsilon, por ejemplo `0.9995` o `0.9997`.
-
-`reward_shaping="none"` y `q_init=0.0` conservan el comportamiento base.
+Los modelos antiguos con configuraciones adicionales siguen pudiéndose cargar,
+pero esos campos ya no forman parte del entrenamiento ni de las búsquedas.
 
 ## Búsqueda de hiperparámetros
 
@@ -93,8 +78,8 @@ interrupción, las anteriores se conservan y la búsqueda queda marcada como
 
 El perfil `overnight` combina 12 configuraciones con 5 seeds (`42`, `123`,
 `999`, `2026` y `777`): son 60 entrenamientos de 20.000 episodios y 100 tests
-greedy cada uno. Incluye variaciones de `q_init`, cantidad de acciones, shaping,
-gamma, alpha y listas sin acción cero.
+greedy cada uno. Varía solamente `alpha`, `gamma`, `epsilon`, `epsilon_min`,
+`epsilon_decay` y la cantidad de bins de posición, velocidad y acciones.
 
 Antes de iniciarlo se puede revisar el plan y una estimación basada en tiempos
 históricos, sin escribir archivos:
@@ -164,8 +149,8 @@ models/q_learning_<config_name>_seed<seed>_<experiment_id>.pkl
 
 - Identificación: `experiment_id`, `timestamp`, `search_id`, `search_name`,
   `config_index`, `total_configs`, `config_name`, `seed` y `notes`.
-- Configuración: bins, `alpha`, `gamma`, epsilon inicial/final, shaping,
-  `q_init`, acciones explícitas, `episodes` y `max_steps`.
+- Configuración: bins, `alpha`, `gamma`, epsilon inicial/final,
+  `epsilon_decay`, `episodes` y `max_steps`.
 - Entrenamiento: recompensa original y de aprendizaje, posición media/máxima,
   pasos y porcentaje de éxito de los últimos 100 episodios.
 - Test: cantidad/porcentaje de éxitos, recompensa original, pasos y máxima
@@ -180,29 +165,18 @@ agrega además una fila a `results/q_learning_search_runs.csv`, con sus timestam
 tiempo total, cantidad planificada/completada, semillas y estado. Las corridas
 hechas directamente desde la notebook dejan vacíos los campos de búsqueda.
 
-## Comparación manual
+## Experimento desde la notebook
 
-La notebook muestra el CSV completo, una tabla reducida y cuatro gráficos:
-
-- tasa de éxito de test;
-- recompensa media de test;
-- pasos medios de test;
-- tiempo de entrenamiento.
-
-No se ordenan resultados ni se selecciona o reentrena automáticamente una
-configuración. Cada llamada a `run_experiment` corresponde a una única corrida.
-La elección queda a criterio del usuario, considerando especialmente
-`test_success_rate`, `test_success_count`, `test_avg_reward`,
-`test_avg_max_position`, `train_last_100_max_position`, estabilidad, tiempo y
-complejidad de la grilla. Una máxima posición cercana a `0.45` indica que el auto
-está aproximándose a la meta aunque todavía no la alcance consistentemente.
+Cada ejecución corresponde a una sola configuración y muestra sus métricas de
+test, tiempo y modelo guardado. Los gráficos presentan recompensa, promedio
+móvil y máxima posición por episodio. Una posición cercana a `0.45` indica que
+el auto está aproximándose a la meta.
 
 ## Discretización
 
 La observación `[posición, velocidad]` se divide en una grilla cuyos límites se
 leen de `env.observation_space`. La fuerza se discretiza con valores uniformes
-entre `-1` y `1`, salvo que se proporcionen acciones explícitas. La tabla Q tiene
-forma:
+entre `-1` y `1`. La tabla Q tiene forma:
 
 ```text
 position_bins × velocity_bins × action_bins
@@ -216,7 +190,7 @@ Antes de llamar a `env.step`, cada acción se convierte en un array NumPy de for
 - `q_learning_agent.py`: agente, entrenamiento, test y persistencia.
 - `experiment_logger.py`: resúmenes y almacenamiento acumulativo en CSV.
 - `hyperparameter_search.py`: búsqueda grid o manual y manejo de interrupciones.
-- `continuous_mountain_car.ipynb`: ejecución, tablas y gráficos descriptivos.
+- `continuous_mountain_car.ipynb`: experimento editable y gráficos de aprendizaje.
 - `results/q_learning_experiments.csv`: historial comparable de corridas.
 - `results/q_learning_search_runs.csv`: duración y estado de cada búsqueda.
 - `results/q_learning_overnight_summary.csv`: agregados por búsqueda y
@@ -224,3 +198,65 @@ Antes de llamar a `env.step`, cada acción se convierte en un array NumPy de for
 - `models/*.pkl`: modelos producidos por cada experimento.
 
 Los archivos `.pkl` solo deben cargarse si provienen de una fuente confiable.
+
+## Dyna-Q
+
+`DynaQAgent` reutiliza la discretización, las acciones y la evaluación de
+`QLearningAgent`, pero inicia una Q-table propia y mantiene un modelo tabular del
+ambiente. Nunca carga un `.pkl` de Q-Learning para entrenar. La configuración
+base replica `baseline_40x40_a11`, definida para Q-Learning, y el
+baseline se usa únicamente al generar la comparación.
+
+Entrenamiento completo con los cinco valores pedidos:
+
+```bash
+poetry run python scripts/train_dyna_q.py \
+  --planning-steps 0 5 10 20 50 \
+  --episodes 20000 --evaluation-episodes 100
+```
+
+Para comparar estabilidad con las mismas cinco seeds del overnight de
+Q-Learning:
+
+```bash
+poetry run python scripts/train_dyna_q.py \
+  --planning-steps 0 5 10 20 50 \
+  --episodes 20000 --evaluation-episodes 100 \
+  --seeds 42 123 999 2026 777
+```
+
+Cada corrida guarda un modelo individual y actualiza
+`models/dyna_q_best.pkl` con el mejor del lote. Los CSV son
+`results/dyna_q_training_results.csv` (una fila por episodio) y
+`results/dyna_q_evaluation_results.csv` (una fila por evaluación).
+
+Para cargar y reevaluar el mejor modelo sin exploración:
+
+```bash
+poetry run python scripts/evaluate_dyna_q.py \
+  --model models/dyna_q_best.pkl --episodes 100
+```
+
+Para crear `results/comparison_qlearning_dynaq.csv` y los PNG en
+`results/plots/`, usando únicamente datos registrados:
+
+```bash
+poetry run python scripts/generate_dyna_q_reports.py
+```
+
+El generador usa el `run_id` Dyna-Q más reciente. Puede elegirse otro con
+`--run-id ID`. La comparación de Q-Learning toma las corridas más extensas de
+`baseline_40x40_a11` disponibles en
+`results/q_learning_experiments.csv`; si faltan, primero se debe ejecutar el
+perfil overnight documentado arriba.
+
+Validación corta del flujo, útil antes de una corrida larga:
+
+```bash
+poetry run python scripts/train_dyna_q.py \
+  --planning-steps 0 5 --episodes 5 --max-steps 100 \
+  --evaluation-episodes 2 --seeds 42
+```
+
+La base para redactar resultados y los placeholders pendientes están en
+`docs/dyna_q_resultados.md`.

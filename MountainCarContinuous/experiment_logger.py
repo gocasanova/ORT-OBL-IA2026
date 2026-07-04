@@ -43,6 +43,8 @@ EXPERIMENT_COLUMNS = [
     "training_time_seconds",
     "model_path",
     "notes",
+    # Columnas legacy: se conservan para leer el CSV histórico, pero los
+    # experimentos nuevos las dejan vacías.
     "reward_shaping",
     "shaping_position_weight",
     "shaping_velocity_weight",
