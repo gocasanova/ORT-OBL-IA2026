@@ -1,0 +1,11 @@
+agent_name,opponent_name,evaluation_function,search_depth,games,wins,losses,win_rate_percent,average_game_length,average_decision_time_seconds,average_expanded_nodes,average_pruned_branches
+Expectimax,Random,balanced,3,400,398,2,99.5,4.9,0.4294,24038.7,0.0
+AlphaBeta,Random,balanced,3,400,394,6,98.5,5.2,0.0468,2512.5,3951.9
+AlphaBeta,Random,weighted,3,400,393,7,98.2,5.2,0.0624,2465.1,3796.2
+Minimax,Random,balanced,3,400,393,7,98.2,5.3,0.379,21314.3,0.0
+AlphaBeta,Random,balanced,1,400,391,9,97.8,4.6,0.0007,39.7,0.0
+AlphaBeta,Random,defensive,3,400,391,9,97.8,5.3,0.0302,2016.2,3064.9
+AlphaBeta,Random,territory,3,400,391,9,97.8,5.2,0.0644,2163.3,3701.0
+AlphaBeta,Random,mobility,3,400,390,10,97.5,5.1,0.0421,2335.2,3765.7
+Minimax,Random,balanced,2,400,386,14,96.5,4.9,0.0178,1024.5,0.0
+Expectimax,Random,balanced,2,400,386,14,96.5,4.7,0.018,1048.2,0.0

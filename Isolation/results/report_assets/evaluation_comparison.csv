@@ -1,0 +1,7 @@
+evaluation_function,win_rate_percent,average_decision_time_seconds,average_expanded_nodes,average_pruned_branches,observation
+balanced,98.5,0.0468,2512.5,3951.9,mejor win rate
+weighted,98.2,0.0624,2465.1,3796.2,resultado intermedio
+defensive,97.8,0.0302,2016.2,3064.9,resultado intermedio
+territory,97.8,0.0644,2163.3,3701.0,resultado intermedio
+mobility,97.5,0.0421,2335.2,3765.7,resultado intermedio
+aggressive,96.5,0.0268,1767.6,3632.7,menor tiempo

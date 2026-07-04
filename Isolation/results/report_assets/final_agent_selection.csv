@@ -1,0 +1,9 @@
+criterion,selected_value
+Agente,Expectimax
+Función de evaluación,balanced
+Profundidad,3
+Win rate,99.5%
+Tiempo promedio,0.4294 s
+Nodos expandidos,24038.7
+Ramas podadas,0.0
+Justificación,Se seleccionó esta configuración porque obtuvo el mejor equilibrio entre win rate y costo computacional dentro de las configuraciones evaluadas.

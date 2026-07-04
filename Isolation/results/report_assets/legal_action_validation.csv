@@ -1,0 +1,5 @@
+agent,selected_action,is_legal
+RandomAgent,"(1, (2, 2))",True
+MinimaxAgent,"(6, (3, 1))",True
+AlphaBetaAgent,"(6, (3, 1))",True
+ExpectimaxAgent,"(6, (1, 0))",True

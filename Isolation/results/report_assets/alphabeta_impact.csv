@@ -1,0 +1,4 @@
+depth,minimax_expanded_nodes,alphabeta_expanded_nodes,alphabeta_pruned_branches,minimax_time_seconds,alphabeta_time_seconds,comment
+1,31.8,32.0,0.0,0.0006,0.0006,No se observó reducción en esta corrida
+2,1145.4,275.7,886.1,0.02,0.0051,Alpha-Beta expandió menos nodos
+3,24617.9,2869.1,4484.6,0.4394,0.0529,Alpha-Beta expandió menos nodos

@@ -1,0 +1,8 @@
+Parámetro,Valor
+Tablero,4x4
+Partidas por enfrentamiento,400
+Profundidades,"1, 2, 3"
+Agentes,"Minimax, Alpha-Beta, Expectimax, RandomAgent"
+Funciones de evaluación,"mobility, aggressive, defensive, balanced, territory, weighted"
+Métricas,"win rate, tiempo, nodos, podas, longitud de partida"
+Ruta de resultados,results/core_400_d123/mate_experiments.csv

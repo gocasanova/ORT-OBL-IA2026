@@ -1,0 +1,1 @@
+El agente final elegido fue Expectimax con heurística balanced y profundidad 3, ya que obtuvo un win rate de 99.5% con un tiempo promedio de decisión de 0.4294 segundos. Esta configuración presentó el mejor equilibrio entre desempeño y costo computacional dentro de las pruebas realizadas.

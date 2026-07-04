@@ -1,0 +1,15 @@
+{
+  "folders": [
+    {
+      "name": "Isolation",
+      "path": "Isolation"
+    },
+    {
+      "name": "MountainCarContinuous",
+      "path": "MountainCarContinuous"
+    }
+  ],
+  "settings": {
+    "python.terminal.activateEnvironment": true
+  }
+}

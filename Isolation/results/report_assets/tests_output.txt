@@ -1,0 +1,12 @@
+test_clone_preserves_rectangular_size_and_is_independent (test_mate.BoardTests) ... ok
+test_generated_actions_are_accepted_on_a_clone (test_mate.BoardTests) ... ok
+test_all_evaluations_are_numeric_and_bounded (test_mate.EvaluationTests) ... ok
+test_agents_return_none_when_player_has_no_move (test_mate.SearchAgentTests) ... ok
+test_all_agents_choose_legal_actions_without_mutating_board (test_mate.SearchAgentTests) ... ok
+test_depth_one_agent_can_finish_a_game (test_mate.SearchAgentTests) ... ok
+test_minimax_and_alpha_beta_agree_and_alpha_beta_visits_no_more_nodes (test_mate.SearchAgentTests) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.059s
+
+OK

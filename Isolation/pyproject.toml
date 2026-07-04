@@ -22,3 +22,8 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 package-mode = false
+
+[dependency-groups]
+dev = [
+    "nbconvert (>=7.17.1,<8.0.0)"
+]
