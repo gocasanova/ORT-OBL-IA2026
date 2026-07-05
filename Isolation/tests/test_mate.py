@@ -5,9 +5,11 @@ import unittest
 import numpy as np
 
 from board import Board, eliminated_cell
+from experiments_mate import AgentSpec, build_matchups
 from mate_agents import AlphaBetaAgent, ExpectimaxAgent, MinimaxAgent
 from mate_evaluations import EVALUATION_FUNCTIONS, balanced_eval
 from random_agent import RandomAgent
+from stratagem import Stratagem
 
 
 def example_board() -> Board:
@@ -100,6 +102,29 @@ class EvaluationTests(unittest.TestCase):
                 self.assertIsInstance(player_two, float)
                 self.assertLessEqual(abs(player_one), 1.0)
                 self.assertLessEqual(abs(player_two), 1.0)
+
+
+class ExperimentTests(unittest.TestCase):
+    def test_final_suite_contains_the_four_missing_matchups(self):
+        matchups = build_matchups("final", [1, 2, 3])
+        labels = [(first.label, second.label) for first, second in matchups]
+        self.assertEqual(
+            labels,
+            [
+                ("Minimax[balanced,d=3]", "Expectimax[balanced,d=3]"),
+                ("Minimax[balanced,d=3]", "Stratagem"),
+                ("AlphaBeta[balanced,d=3]", "Stratagem"),
+                ("Expectimax[balanced,d=3]", "Stratagem"),
+            ],
+        )
+
+    def test_stratagem_spec_builds_the_repository_agent_for_either_player(self):
+        spec = AgentSpec("Stratagem")
+        for player in (1, 2):
+            with self.subTest(player=player):
+                agent = spec.build(player, seed=2026)
+                self.assertIsInstance(agent, Stratagem)
+                self.assertEqual(agent.player, player)
 
 
 if __name__ == "__main__":

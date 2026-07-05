@@ -6,6 +6,8 @@ Run a quick validation with::
 
 The default ``core`` suite covers algorithms, depths, and evaluation functions.
 The ``full`` suite additionally runs a round-robin between all evaluations.
+The ``final`` suite runs the missing matchups needed to complete the final
+balanced-depth tournament, including the repository's Stratagem agent.
 """
 
 from __future__ import annotations
@@ -15,6 +17,7 @@ import csv
 import json
 import random
 import time
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from itertools import combinations
 from pathlib import Path
@@ -30,6 +33,7 @@ from mate_agents import (
 )
 from mate_evaluations import EVALUATION_FUNCTIONS, get_evaluation
 from random_agent import RandomAgent
+from stratagem import Stratagem
 
 
 @dataclass(frozen=True)
@@ -42,13 +46,15 @@ class AgentSpec:
 
     @property
     def label(self) -> str:
-        if self.algorithm == "Random":
-            return "Random"
+        if self.algorithm in ("Random", "Stratagem"):
+            return self.algorithm
         return f"{self.algorithm}[{self.evaluation},d={self.depth}]"
 
     def build(self, player: int, seed: int):
         if self.algorithm == "Random":
             return RandomAgent(player, seed=seed)
+        if self.algorithm == "Stratagem":
+            return Stratagem(player)
         classes = {
             "Minimax": MinimaxAgent,
             "AlphaBeta": AlphaBetaAgent,
@@ -180,9 +186,28 @@ def run_matchup(
     return rows
 
 
+def _run_scheduled_matchup(task):
+    """Run one numbered matchup; kept top-level for multiprocessing."""
+    index, spec_a, spec_b, games, seed, board_size = task
+    return index, run_matchup(spec_a, spec_b, games, seed, board_size)
+
+
 def build_matchups(suite: str, depths: Sequence[int]) -> List[Tuple[AgentSpec, AgentSpec]]:
     """Build the requested experiment matrix without duplicate configurations."""
     random_spec = AgentSpec("Random")
+    if suite == "final":
+        depth = max(depths)
+        minimax = AgentSpec("Minimax", "balanced", depth)
+        alpha_beta = AgentSpec("AlphaBeta", "balanced", depth)
+        expectimax = AgentSpec("Expectimax", "balanced", depth)
+        stratagem = AgentSpec("Stratagem")
+        return [
+            (minimax, expectimax),
+            (minimax, stratagem),
+            (alpha_beta, stratagem),
+            (expectimax, stratagem),
+        ]
+
     matchups: List[Tuple[AgentSpec, AgentSpec]] = []
     active_depths = depths[:1] if suite == "smoke" else depths
     for depth in active_depths:
@@ -235,16 +260,24 @@ def save_results(rows: Iterable[dict], output_dir: Path) -> Tuple[Path, Path]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--suite", choices=("smoke", "core", "full"), default="core")
+    parser.add_argument(
+        "--suite", choices=("smoke", "core", "full", "final"), default="core"
+    )
     parser.add_argument("--games", type=int, default=2, help="games per matchup")
     parser.add_argument("--depths", type=int, nargs="+", default=[1, 2])
     parser.add_argument("--seed", type=int, default=2026)
     parser.add_argument("--rows", type=int, default=4)
     parser.add_argument("--cols", type=int, default=4)
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="matchups to execute concurrently",
+    )
     parser.add_argument("--output-dir", type=Path, default=Path("results"))
     args = parser.parse_args()
-    if args.games < 1 or any(depth < 1 for depth in args.depths):
-        parser.error("games and all depths must be positive")
+    if args.games < 1 or any(depth < 1 for depth in args.depths) or args.workers < 1:
+        parser.error("games, workers, and all depths must be positive")
     if args.rows < 2 or args.cols < 2:
         parser.error("board dimensions must be at least 2")
     return args
@@ -255,20 +288,42 @@ def main() -> None:
     matchups = build_matchups(args.suite, args.depths)
     print(
         f"Running {len(matchups)} matchups x {args.games} games "
-        f"on {args.rows}x{args.cols}..."
+        f"on {args.rows}x{args.cols} with {args.workers} worker(s)...",
+        flush=True,
     )
-    all_rows = []
-    for index, (spec_a, spec_b) in enumerate(matchups, start=1):
-        print(f"[{index}/{len(matchups)}] {spec_a.label} vs {spec_b.label}")
-        all_rows.extend(
-            run_matchup(
-                spec_a,
-                spec_b,
-                args.games,
-                args.seed + index * 100_003,
-                (args.rows, args.cols),
-            )
+    tasks = [
+        (
+            index,
+            spec_a,
+            spec_b,
+            args.games,
+            args.seed + index * 100_003,
+            (args.rows, args.cols),
         )
+        for index, (spec_a, spec_b) in enumerate(matchups, start=1)
+    ]
+    rows_by_index = {}
+    if args.workers == 1:
+        for task in tasks:
+            index, rows = _run_scheduled_matchup(task)
+            rows_by_index[index] = rows
+            print(f"[{index}/{len(matchups)}] completed", flush=True)
+    else:
+        with ProcessPoolExecutor(max_workers=args.workers) as executor:
+            futures = {
+                executor.submit(_run_scheduled_matchup, task): task[0]
+                for task in tasks
+            }
+            for future in as_completed(futures):
+                index, rows = future.result()
+                rows_by_index[index] = rows
+                print(f"[{index}/{len(matchups)}] completed", flush=True)
+
+    all_rows = [
+        row
+        for index in range(1, len(matchups) + 1)
+        for row in rows_by_index[index]
+    ]
     csv_path, json_path = save_results(all_rows, args.output_dir)
     print(f"Saved {csv_path} and {json_path}")
 

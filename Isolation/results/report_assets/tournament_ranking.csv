@@ -1,0 +1,4 @@
+agent_name,opponents,games,wins,average_decision_time_seconds,average_expanded_nodes,average_pruned_branches,win_rate,ci95_low,ci95_high
+AlphaBeta,3,1200,671,0.0533,2891.6,4784.7,55.9,53.1,58.7
+Minimax,3,1200,661,0.448,24949.3,0.0,55.1,52.3,57.9
+Expectimax,3,1200,640,0.4718,26280.0,0.0,53.3,50.5,56.1

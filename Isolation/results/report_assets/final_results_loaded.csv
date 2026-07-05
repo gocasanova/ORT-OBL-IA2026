@@ -39,3 +39,11 @@ matchup,agent_name,opponent_name,evaluation_function,search_depth,games,wins,los
 "AlphaBeta[territory,d=3]_vs_Random",Random,AlphaBeta,none,0,400,9,391,0.0225,5.2075,1.888545257104344e-05,0.0,0.0
 "AlphaBeta[weighted,d=3]_vs_Random",AlphaBeta,Random,weighted,3,400,393,7,0.9825,5.2475,0.0623512876403508,2465.0986038394417,3796.221640488656
 "AlphaBeta[weighted,d=3]_vs_Random",Random,AlphaBeta,none,0,400,7,393,0.0175,5.2475,1.813462815185909e-05,0.0,0.0
+"Minimax[balanced,d=3]_vs_Expectimax[balanced,d=3]",Minimax,Expectimax,balanced,3,400,199,201,0.4975,4.9975,0.4450459348777117,24750.24224224224,0.0
+"Minimax[balanced,d=3]_vs_Expectimax[balanced,d=3]",Expectimax,Minimax,balanced,3,400,201,199,0.5025,4.9975,0.4576408251514658,25487.867,0.0
+"Minimax[balanced,d=3]_vs_Stratagem",Minimax,Stratagem,balanced,3,400,268,132,0.67,4.69,0.4596118484806976,25479.76851851852,0.0
+"Minimax[balanced,d=3]_vs_Stratagem",Stratagem,Minimax,none,0,400,132,268,0.33,4.69,0.4671755076882602,0.0,0.0
+"AlphaBeta[balanced,d=3]_vs_Stratagem",AlphaBeta,Stratagem,balanced,3,400,261,139,0.6525,4.7425,0.0534964194268024,2872.5331971399387,4972.555669050051
+"AlphaBeta[balanced,d=3]_vs_Stratagem",Stratagem,AlphaBeta,none,0,400,139,261,0.3475,4.7425,0.4494979450247587,0.0,0.0
+"Expectimax[balanced,d=3]_vs_Stratagem",Expectimax,Stratagem,balanced,3,400,243,157,0.6075,4.2225,0.5019080120809086,27550.25519630485,0.0
+"Expectimax[balanced,d=3]_vs_Stratagem",Stratagem,Expectimax,none,0,400,157,243,0.3925,4.2225,0.4879138687303582,0.0,0.0

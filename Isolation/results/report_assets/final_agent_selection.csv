@@ -1,9 +1,9 @@
 criterion,selected_value
-Agente,Expectimax
+Agente,AlphaBeta
 Función de evaluación,balanced
 Profundidad,3
-Win rate,99.5%
-Tiempo promedio,0.4294 s
-Nodos expandidos,24038.7
-Ramas podadas,0.0
-Justificación,Se seleccionó esta configuración porque obtuvo el mejor equilibrio entre win rate y costo computacional dentro de las configuraciones evaluadas.
+Win rate,55.9%
+Tiempo promedio,0.0533 s
+Nodos expandidos,2891.6
+Ramas podadas,4784.7
+Justificación,"Los intervalos de confianza del 95% se superponen; entre agentes de rendimiento comparable, Alpha-Beta fue el más rápido, al menos 8.4 veces más que el siguiente competidor."

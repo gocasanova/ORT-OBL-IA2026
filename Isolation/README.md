@@ -71,6 +71,23 @@ Profundidades grandes, especialmente con Minimax o Expectimax, pueden demorar
 por el alto factor de ramificación. Para una prueba corta conviene usar
 profundidades 1 y 2.
 
+### Torneo final
+
+La suite `final` completa los cruces de profundidad 3 que faltan para comparar
+Minimax, Alpha-Beta y Expectimax entre sí, y enfrenta cada uno con el agente
+`Stratagem` incluido en el repositorio. Alterna qué participante juega primero.
+
+```bash
+poetry run python experiments_mate.py --suite final --games 400 --depths 3 \
+  --workers 4 \
+  --output-dir results/final_tournament_400
+```
+
+`Stratagem` se evalúa sin modificar, exactamente como fue entregado en el
+repositorio. Su implementación tiene una condición terminal asimétrica cuando
+actúa como jugador 2; el torneo alterna el orden de juego para mitigar ese sesgo
+y la limitación debe declararse al interpretar sus resultados.
+
 Los resultados se sobrescriben en:
 
 - `results/mate_experiments.csv`
